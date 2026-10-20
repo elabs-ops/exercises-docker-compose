@@ -1,0 +1,6 @@
+services:
+  logger-service:
+    image: devopsdockeruh/simple-web-service:latest
+    container_name: simple-logger
+    volumes:
+      - ./log.txt:/usr/src/app/text.log
