@@ -5,12 +5,20 @@ services:
       - "${BACKEND_PORT:-8080}:8080"
     environment:
       - REQUEST_ORIGIN=http://localhost:5001
+      # Redis
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
+      # Postgres
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DATABASE=${POSTGRES_DB}
     restart: unless-stopped
     container_name: backend-example
     depends_on:
       redis:
+        condition: service_healthy
+      postgres-db:
         condition: service_healthy
 
   frontend:
@@ -30,3 +38,26 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
+
+  postgres-db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    container_name: postgres-storage
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck: 
+      test: ["CMD-SHELL", "pg_isready -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+
+volumes:
+  database:
